@@ -1,42 +1,101 @@
 @extends('layout.app')
 
-@section('title', 'Lihat Sepeda')
+@section('title', 'Daftar Sepeda')
 
 @section('content')
-<div class="container mx-auto px-6 py-8">
-    <div class="bg-white shadow-md rounded-2xl p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Daftar Sepeda 🚲</h2>
+<div class="min-h-screen bg-gray-50 py-10">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
 
-        @if ($bicycles->isEmpty())
-            <div class="flex flex-col items-center justify-center text-center py-10">
-                <img src="{{ asset('images/sepeda.png') }}" alt="Sepeda kosong" class="w-90 h-60 mb-8 opacity-80">
-                <p class="text-lg font-medium text-gray-600 mb-4">
-                    Wah, sepertinya belum ada sepeda yang tersedia..
-                </p>
-                <a href="{{ route('user.dashboard') }}" 
-                   class="inline-block bg-green-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition">
-                   Kembali ke Dashboard
+        <!-- 1. Header Halaman -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-900" style="font-family: 'Poppins', sans-serif;">
+                Pilih Sepeda Anda
+            </h1>
+            <p class="text-lg text-gray-500 mt-2">
+                Pilih sepeda yang paling sesuai dengan gaya berkeliling Anda hari ini.
+            </p>
+
+            <div class="mt-6">
+                <a href="{{ route('user.dashboard') }}"
+                   class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-[var(--primary)] transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>
+                    Kembali ke Dashboard
                 </a>
             </div>
-        @else
-            <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                @foreach ($bicycles as $bicycle)
-                <div class="border rounded-xl shadow hover:shadow-lg transition p-4 bg-white flex flex-col items-center text-center">
-                    <img src="{{ $bicycle->image ? $bicycle->image : asset('images/sepeda.png') }}" 
-                         alt="{{ $bicycle->merk }}" 
-                         class="w-40 h-40 object-contain mb-4">
-                    <h3 class="text-lg font-semibold text-green-700 mb-1">{{ $bicycle->merk }}</h3>
-                    <p class="text-gray-600 text-sm mb-1"><strong>Kode:</strong> {{ $bicycle->kode_sepeda }}</p>
-                    <p class="text-gray-600 text-sm mb-1"><strong>Tipe:</strong> {{ $bicycle->type ?? '-' }}</p>
-                    <p class="text-gray-500 text-sm mb-3">{{ $bicycle->description ?? 'Tidak ada deskripsi.' }}</p>
-                    <a href="{{ route('user.rent.form', $bicycle->id) }}" 
-                    class="bg-green-700 text-white px-4 py-2 rounded-lg w-full block text-center hover:bg-green-800 transition">
-                    Sewa Sekarang
-                    </a>
-                </div>
+        </div>
+
+        <!-- 2. Grid Responsif untuk Kartu Sepeda -->
+        @if($bicycles->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Mulai Looping Data Sepeda (Sekarang sudah di-grup) -->
+                @foreach($bicycles as $bicycle)
+                <a href="{{ route('user.rent.form', $bicycle->id) }}"
+                   class="group block bg-white rounded-2xl shadow-xl border border-gray-100
+                          overflow-hidden transition-all duration-300
+                          hover:shadow-2xl hover:-translate-y-2">
+
+                    <!-- Bagian Gambar Kartu -->
+                    <div class="relative w-full h-56">
+                        <img src="{{ Str::startsWith($bicycle->image, 'http') ? $bicycle->image : asset('storage/' . $bicycle->image) }}"
+                             alt="{{ $bicycle->merk }} {{ $bicycle->type }}"
+                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+
+                        <!-- ================================== -->
+                        <!-- BADGE STOK (INI YANG DIPERBARUI) -->
+                        <!-- ================================== -->
+                        <span class="absolute top-4 left-4 inline-flex items-center
+                                   px-3 py-1 rounded-full text-xs font-bold
+                                   bg-green-100 text-[var(--primary)] border border-green-200">
+                            <i class="fa-solid fa-check mr-1.5"></i>
+                            <strong>{{ $bicycle->available_stock }}</strong>&nbsp;Stok Tersedia
+                        </span>
+                    </div>
+
+                    <!-- Bagian Konten Kartu -->
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                            {{ $bicycle->merk }}
+                        </h3>
+                        <p class="text-sm font-medium text-gray-500 -mt-2 mb-3">
+                            Tipe: {{ $bicycle->type }}
+                        </p>
+
+                        <p class="text-gray-600 text-sm mb-5 h-16 overflow-hidden">
+                            {{ Str::limit($bicycle->description, 100, '...') }}
+                        </p>
+
+                        <div class="w-full text-center bg-[var(--primary)] text-white font-semibold
+                                    py-3 rounded-lg transition-all duration-300
+                                    group-hover:bg-green-800 group-hover:shadow-lg">
+                            Sewa Sekarang <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </div>
+                    </div>
+                </a>
                 @endforeach
+                <!-- Selesai Looping -->
+
+            </div>
+        @else
+            <!-- Tampilan Jika Sepeda Kosong (Empty State) -->
+            <div class="flex flex-col items-center justify-center py-20
+                        bg-white rounded-2xl shadow-xl border border-gray-100">
+                <div class="p-6 rounded-full mb-4 bg-yellow-50 animate-pulse">
+                    <i class="fa-solid fa-store-slash text-5xl text-yellow-500"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">Sepeda Habis Dipesan</h3>
+                <p class="text-gray-500 max-w-md text-center mt-2 mb-8">
+                    Wah, sepertinya semua sepeda sedang disewa oleh mahasiswa lain.
+                    Silakan kembali lagi nanti, ya!
+                </p>
+                <a href="{{ route('user.dashboard') }}"
+                   class="px-6 py-3 bg-gray-800 text-white font-medium
+                          rounded-lg hover:bg-gray-900 transition shadow-lg">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Dashboard
+                </a>
             </div>
         @endif
+
     </div>
 </div>
 @endsection

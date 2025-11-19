@@ -249,9 +249,6 @@
             <a href="{{ route('admin.transactions') }}" class="{{ request()->routeIs('admin.transactions') ? 'active' : '' }}">
                 <i class="bi bi-clock-history"></i> Transaksi
             </a>
-            <a href="{{ route('admin.reports') }}" class="{{ request()->routeIs('admin.reports') ? 'active' : '' }}">
-                <i class="bi bi-graph-up"></i> Laporan
-            </a>
             <div class="mt-4 pt-3">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -270,5 +267,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@stack('scripts')
 </body>
 </html>

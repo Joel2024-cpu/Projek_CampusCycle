@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -18,7 +20,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|ends_with:@unej.ac.id|unique:users,email',
+            'email' => 'required|email|ends_with:@mail.unej.ac.id|unique:users,email',
             'password' => 'required|min:6|confirmed',
         ]);
 
@@ -68,5 +70,68 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login')->with('success', 'Berhasil logout');
+    }
+
+    // ======================================================
+    // 🔐 METHOD BARU: LOGIN DENGAN GOOGLE
+    // ======================================================
+
+    /**
+     * Redirect ke Google OAuth
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google callback
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+
+            // Validasi email harus @unej.ac.id
+            if (!str_ends_with($googleUser->getEmail(), '@mail.unej.ac.id')) {
+                return redirect()->route('login')->with('error', 'Hanya email Unej yang diperbolehkan.');
+            }
+
+            // Cek apakah user sudah ada
+            $user = User::where('email', $googleUser->getEmail())->first();
+
+            if (!$user) {
+                // 🔹 Tentukan role berdasarkan email
+                $role = str_contains($googleUser->getEmail(), 'admin') ? 'admin' : 'user';
+
+                // Buat user baru jika belum ada
+                $user = User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'password' => Hash::make(Str::random(24)), // Random password
+                    'google_id' => $googleUser->getId(),
+                    'role' => $role,
+                    'email_verified_at' => now(), // Auto verify email Google
+                ]);
+            } else {
+                // Update google_id jika user sudah ada
+                $user->update([
+                    'google_id' => $googleUser->getId(),
+                ]);
+            }
+
+            // Login user
+            Auth::login($user);
+
+            // Redirect berdasarkan role
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard')->with('success', 'Login dengan Google berhasil! Selamat datang Admin!');
+            } else {
+                return redirect()->route('user.dashboard')->with('success', 'Login dengan Google berhasil!');
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with('error', 'Login dengan Google gagal: ' . $e->getMessage());
+        }
     }
 }

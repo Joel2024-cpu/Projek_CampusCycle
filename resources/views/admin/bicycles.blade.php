@@ -64,8 +64,8 @@
                         <td class="fw-semibold text-success">{{ $bicycle->kode_sepeda }}</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="{{ asset($bicycle->image ?? 'images/sepeda.png') }}" 
-                                class="rounded me-2" width="32" height="32">
+                                <img src="{{ asset('storage/' . $bicycle->image) }}"
+                                class="rounded me-2" width="32" height="32" onerror="this.onerror=null; this.src='{{ asset('images/pict.png') }}';">
                                 <div class="fw-semibold">{{ $bicycle->merk }}</div>
                             </div>
                         </td>
@@ -83,7 +83,7 @@
                         <td class="fw-semibold text-success">{{ $bicycle->rentals_count }}x</td>
                         <td>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-success edit-btn" 
+                                <button class="btn btn-sm btn-outline-success edit-btn"
                                         data-id="{{ $bicycle->id }}"
                                         data-kode="{{ $bicycle->kode_sepeda }}"
                                         data-merk="{{ $bicycle->merk }}"
@@ -96,7 +96,7 @@
                                 <form action="{{ route('admin.bicycles.destroy', $bicycle->id) }}" method="POST" onsubmit="return confirm('Hapus sepeda ini?')" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" @if($bicycle->status == 'rented') disabled @endif><i class="bi bi-trash"></i></button>
                                 </form>
                             </div>
                         </td>
@@ -114,8 +114,58 @@
         </div>
 
         @if($bicycles->hasPages())
-        <div class="card-footer bg-white border-0">
-            {{ $bicycles->links() }}
+        <div class="card-footer bg-white border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Menampilkan {{ $bicycles->firstItem() ?? 0 }} - {{ $bicycles->lastItem() ?? 0 }} dari {{ $bicycles->total() }} data
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        {{-- Previous Page Link --}}
+                        @if ($bicycles->onFirstPage())
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="bi bi-chevron-left"></i>
+                                </span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $bicycles->previousPageUrl() }}" aria-label="Previous">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        @endif
+
+                        {{-- Pagination Elements --}}
+                        @foreach ($bicycles->getUrlRange(1, $bicycles->lastPage()) as $page => $url)
+                            @if ($page == $bicycles->currentPage())
+                                <li class="page-item active">
+                                    <span class="page-link">{{ $page }}</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                </li>
+                            @endif
+                        @endforeach
+
+                        {{-- Next Page Link --}}
+                        @if ($bicycles->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $bicycles->nextPageUrl() }}" aria-label="Next">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        @else
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="bi bi-chevron-right"></i>
+                                </span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
         </div>
         @endif
     </div>
@@ -132,31 +182,49 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label>Kode Sepeda</label>
-                    <input type="text" name="kode_sepeda" class="form-control" required>
+                    <input type="text" name="kode_sepeda" class="form-control @error('kode_sepeda') is-invalid @enderror" required value="{{ old('kode_sepeda') }}">
+                    @error('kode_sepeda')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
                     <label>Merk</label>
-                    <input type="text" name="merk" class="form-control" required>
+                    <input type="text" name="merk" class="form-control @error('merk') is-invalid @enderror" required value="{{ old('merk') }}">
+                    @error('merk')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
                     <label>Tipe</label>
-                    <input type="text" name="type" class="form-control">
+                    <input type="text" name="type" class="form-control @error('type') is-invalid @enderror" value="{{ old('type') }}">
+                    @error('type')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
                     <label>Deskripsi</label>
-                    <textarea name="description" class="form-control"></textarea>
+                    <textarea name="description" class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
                     <label>Status</label>
-                    <select name="status" class="form-select" required>
-                        <option value="available">Tersedia</option>
-                        <option value="rented">Disewa</option>
-                        <option value="maintenance">Perbaikan</option>
+                    <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                        <option value="available" @if(old('status') == 'available') selected @endif>Tersedia</option>
+                        <option value="rented" @if(old('status') == 'rented') selected @endif>Disewa</option>
+                        <option value="maintenance" @if(old('status') == 'maintenance') selected @endif>Perbaikan</option>
                     </select>
+                    @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
                     <label>Gambar</label>
-                    <input type="file" name="image" class="form-control">
+                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
+                    @error('image')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
             <div class="modal-footer">
@@ -215,20 +283,65 @@
 document.addEventListener("DOMContentLoaded", function() {
     const editButtons = document.querySelectorAll(".edit-btn");
     const form = document.getElementById("editBicycleForm");
-    const modal = new bootstrap.Modal(document.getElementById("editBicycleModal"));
 
+    // FIX KRITIS: Re-open modal JIKA terjadi error saat Tambah Sepeda (Mengatasi ParseError)
+    @if ($errors->any())
+        var addModal = new bootstrap.Modal(document.getElementById('addBicycleModal'));
+        addModal.show();
+    @endif
+
+    // Logic untuk Modal Edit
     editButtons.forEach(btn => {
         btn.addEventListener("click", function() {
             const id = this.dataset.id;
+
+            // Mengarahkan Action Edit sesuai rute POST update Anda
             form.action = `/admin/bicycles/update/${id}`;
+            form.method = 'POST'; // Pastikan form method adalah POST
+
+            // Mengisi data ke form
             document.getElementById("edit_kode").value = this.dataset.kode;
             document.getElementById("edit_merk").value = this.dataset.merk;
             document.getElementById("edit_type").value = this.dataset.type;
             document.getElementById("edit_description").value = this.dataset.description;
             document.getElementById("edit_status").value = this.dataset.status;
-            modal.show();
+
+            var editModal = new bootstrap.Modal(document.getElementById("editBicycleModal"));
+            editModal.show();
         });
     });
 });
 </script>
+
+<style>
+.pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    margin: 0 2px;
+    border: 1px solid #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+.pagination .page-link {
+    color: #198754;
+}
+
+.pagination .page-link:hover {
+    color: #146c43;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+</style>
 @endsection

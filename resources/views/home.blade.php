@@ -28,7 +28,7 @@
 
             <div class="grid grid-cols-3 text-center mt-10">
                 <div>
-                    <h3 class="text-yellow-400 text-2xl font-bold mb-1">500+</h3>
+                    <h3 class="text-yellow-400 text-2xl font-bold mb-1">3+</h3>
                     <p class="text-white/70">Sepeda Tersedia</p>
                 </div>
                 <div>

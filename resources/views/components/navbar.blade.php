@@ -10,7 +10,6 @@
 
         <ul id="menu" class="hidden lg:flex space-x-6 items-center font-medium text-[var(--primary)]">
             <li><a href="/" class="hover:text-[var(--primary-light)] transition">Beranda</a></li>
-            <li><a href="#fitur" class="hover:text-[var(--primary-light)] transition">Fitur</a></li>
 
             @auth
                 <li>
@@ -40,7 +39,6 @@
     <div id="mobile-menu" class="hidden lg:hidden bg-white shadow-md">
         <ul class="flex flex-col space-y-3 p-4 text-[var(--primary)] font-medium">
             <li><a href="/" class="hover:text-[var(--primary-light)]">Beranda</a></li>
-            <li><a href="#fitur" class="hover:text-[var(--primary-light)]">Fitur</a></li>
 
             @auth
                 <li><span class="text-green-600 font-semibold">{{ Auth::user()->name }}</span></li>
@@ -64,7 +62,7 @@
             @endauth
         </ul>
     </div>
-    
+
     <script>
         const btn = document.getElementById('menu-btn');
         const menu = document.getElementById('mobile-menu');

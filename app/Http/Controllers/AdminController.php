@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Bicycle;
@@ -9,7 +12,7 @@ use App\Models\Package;
 use App\Models\Rental;
 use App\Models\Payment;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB; // Pastikan ini ada
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -30,7 +33,6 @@ class AdminController extends Controller
         ];
 
         // 2. TRANSAKSI TERAKHIR (5 TERATAS)
-        // PERBAIKAN: Nama variabel diubah ke '$rentals' agar cocok dengan view
         $rentals = Rental::with(['user', 'bicycle'])
             ->latest()
             ->take(5)
@@ -44,7 +46,7 @@ class AdminController extends Controller
             'pending_transactions' => Rental::where('status', 'pending')->count(),
         ];
 
-        // 4. PERBAIKAN: Tambahkan variabel $totalRentals yang juga error sebelumnya
+        // 4. Tambahkan variabel $totalRentals
         $totalRentals = $stats['total_rentals'];
 
         // 5. Kirim semua data ke view
@@ -173,29 +175,56 @@ class AdminController extends Controller
         return view('admin.payments', compact('payments', 'stats', 'monthly_stats', 'revenueDistribution'));
     }
 
-    /**
-     * Menampilkan halaman manajemen transaksi.
+   /**
+     * Menampilkan halaman manajemen transaksi dengan FITUR SEARCH.
      */
-    public function transactions()
+    public function transactions(Request $request)
     {
-        $transactions = Rental::with(['user', 'bicycle', 'package', 'payment'])
-            ->latest()
-            ->paginate(15);
+        $search = $request->input('search');
 
+        // 1. Query Dasar dengan Relasi
+        $query = Rental::with(['user', 'bicycle', 'package', 'payment'])->latest();
+
+        // 2. Logika Pencarian (Jika ada input search)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                // Cari berdasarkan ID Transaksi
+                $q->where('id', 'like', "%{$search}%")
+                  // Cari berdasarkan Nama User (Relasi)
+                  ->orWhereHas('user', function($u) use ($search) {
+                      $u->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  // Cari berdasarkan Kode/Merk Sepeda (Relasi)
+                  ->orWhereHas('bicycle', function($b) use ($search) {
+                      $b->where('kode_sepeda', 'like', "%{$search}%")
+                        ->orWhere('merk', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 3. Eksekusi Pagination (Append agar search tidak hilang saat pindah halaman)
+        $transactions = $query->paginate(15)->appends(['search' => $search]);
+
+        // 4. Hitung Statistik (Tetap Sama)
         $status_counts = [
             'pending' => Rental::where('status', 'pending')->count(),
             'berjalan' => Rental::where('status', 'berjalan')->count(),
             'selesai' => Rental::where('status', 'selesai')->count(),
             'batal' => Rental::where('status', 'batal')->count(),
         ];
+
         return view('admin.transactions', compact('transactions', 'status_counts'));
     }
 
     /**
-     * Memperbarui status transaksi (Pending -> Berjalan -> Selesai).
+     * PERBAIKAN BESAR: Update status transaksi dengan perhitungan yang KONSISTEN
      */
-    public function updateTransactionStatus(Request $request, $id)
-    {
+ public function updateTransactionStatus(Request $request, $id)
+{
+    try {
+        \Log::info('Admin updating transaction status', ['id' => $id, 'status' => $request->status]);
+
         $rental = Rental::with(['bicycle', 'package', 'payment'])->findOrFail($id);
         $statusBaru = $request->input('status');
 
@@ -203,63 +232,148 @@ class AdminController extends Controller
             return back()->with('error', 'Status tidak valid.');
         }
 
+        $returnTime = Carbon::now('Asia/Jakarta');
+
         if ($statusBaru === 'berjalan') {
             $rental->update(['status' => 'berjalan']);
             $rental->bicycle->update(['status' => 'rented']);
+
             Payment::updateOrCreate(
                 ['rental_id' => $rental->id],
                 [
                     'user_id' => $rental->user_id,
                     'rental_id' => $rental->id,
-                    'status_bayar' => 'lunas', // <- Set LUNAS
+                    'status_bayar' => 'lunas',
                     'metode' => 'cash',
                     'total' => $rental->total_cost,
                     'denda' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $returnTime,
+                    'updated_at' => $returnTime,
                 ]
             );
+
+            return back()->with('success', 'Sewa berhasil dimulai!');
         }
         elseif ($statusBaru === 'selesai') {
-            $returnTime = now();
+            // 1. HITUNG DENDA KETERLAMBATAN
             $isLate = $returnTime->gt($rental->end_time);
-            $denda = 0;
-            $minutesLate = 0;
+            $dendaKeterlambatan = 0;
+
             if ($isLate) {
-                $minutesLate = $returnTime->diffInMinutes($rental->end_time);
+                $minutesLate = abs($returnTime->diffInMinutes($rental->end_time));
                 $intervals = ceil($minutesLate / 10);
-                $denda = $intervals * 5000;
+                $dendaKeterlambatan = $intervals * 5000;
             }
+
+            // 2. AMBIL DENDA KERUSAKAN DARI INPUT
+            $dendaKerusakan = (int) $request->input('denda_kerusakan', 0);
+
+            // 3. PERBAIKAN: Hitung TOTAL BIAYA dengan benar
+            $biayaPaket = $rental->package->harga ?? 0;
+
+// Jika harga paket 0 atau minus, gunakan default
+            if ($biayaPaket <= 0) {
+                $biayaPaket = 2500; // Default harga paket kilat
+            }
+            $totalBiaya = $biayaPaket + $dendaKeterlambatan + $dendaKerusakan;
+
+            // 4. PERBAIKAN: Update database dengan data yang KONSISTEN
             $rental->update([
                 'status' => 'selesai',
                 'return_time' => $returnTime,
-                'denda' => $denda,
-                'lama_telat' => $minutesLate,
+                'denda' => $dendaKeterlambatan, // Simpan hanya denda keterlambatan
+                'total_cost' => $totalBiaya, // Simpan total akhir
             ]);
+
             $rental->bicycle->update(['status' => 'available']);
+
+            // 5. PERBAIKAN: Update payment dengan data KONSISTEN
             Payment::updateOrCreate(
                 ['rental_id' => $rental->id],
                 [
                     'user_id' => $rental->user_id,
                     'rental_id' => $rental->id,
-                    'status_bayar' => 'lunas', // <- Set LUNAS
+                    'status_bayar' => 'lunas',
                     'metode' => 'cash',
-                    'total' => $rental->total_cost + $denda,
-                    'denda' => $denda,
+                    'total' => $totalBiaya, // Total = paket + semua denda
+                    'denda' => $dendaKeterlambatan + $dendaKerusakan, // Total denda
                 ]
             );
-        }
-        // PERBAIKAN BUG: Jika 'pending' atau 'batal', set pembayaran ke 'belum'
-        else { // Ini akan menangani 'batal' dan 'pending'
 
+            \Log::info('Transaction completed', [
+                'rental_id' => $rental->id,
+                'biaya_paket' => $biayaPaket,
+                'denda_keterlambatan' => $dendaKeterlambatan,
+                'denda_kerusakan' => $dendaKerusakan,
+                'total_biaya' => $totalBiaya
+            ]);
+
+            return back()->with('success', 'Sewa selesai! Total Bayar: Rp ' . number_format($totalBiaya, 0, ',', '.'));
+        }
+        else {
+            // Handle Batal/Pending
             $rental->update(['status' => $statusBaru]);
             $rental->bicycle->update(['status' => 'available']);
-
             if ($rental->payment) {
-                $rental->payment->update(['status_bayar' => 'belum']);
+                 $rental->payment->update(['status_bayar' => 'belum']);
             }
+
+            return back()->with('success', 'Status transaksi diperbarui.');
         }
 
-        return back()->with('success', 'Status transaksi & pembayaran berhasil diperbarui.');
+    } catch (\Exception $e) {
+        \Log::error('Error in updateTransactionStatus: ' . $e->getMessage());
+        return back()->with('error', 'Terjadi error sistem. Cek log untuk detail.');
+    }
+}
+
+    // --- FITUR EDIT PROFIL ADMIN ---
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('admin.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'password' => 'nullable|min:6|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ], [
+            'email.unique' => 'Email ini sudah digunakan.',
+            'password.min' => 'Password minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'profile_picture.image' => 'File harus berupa gambar.',
+            'profile_picture.max' => 'Ukuran gambar maksimal 2MB.',
+        ]);
+
+        // 1. Update Data Dasar
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // 2. Logika Upload Foto Profil
+        if ($request->hasFile('profile_picture')) {
+            // Hapus foto lama jika ada
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            // Simpan foto baru
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
+
+        // 3. Update Password (Hanya jika diisi)
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profil Admin berhasil diperbarui!');
     }
 }

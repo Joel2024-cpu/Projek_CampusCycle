@@ -3,13 +3,40 @@
 @section('title', 'Dashboard Admin')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-2 text-success">Dashboard Admin</h2>
-        <p class="text-muted mb-0">Selamat datang! Kelola sistem CampusCycle dari sini.</p>
-    </div>
-    <div class="text-muted">
-        <i class="bi bi-calendar3 me-2"></i>{{ now()->format('d M Y, H:i') }}
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="card-body p-4" style="background: linear-gradient(135deg, #006837 0%, #00a859 100%); color: white;">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+
+            <div class="d-flex align-items-center mb-3 mb-md-0">
+                <div class="position-relative me-4">
+                    @if(Auth::user()->profile_picture)
+                        <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}"
+                             alt="Admin Profil"
+                             class="rounded-circle border border-3 border-white shadow-sm"
+                             style="width: 70px; height: 70px; object-fit: cover;">
+                    @else
+                        <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center fw-bold border border-3 border-white shadow-sm"
+                             style="width: 70px; height: 70px; font-size: 28px;">
+                            {{ substr(Auth::user()->name, 0, 1) }}
+                        </div>
+                    @endif
+                    <span class="position-absolute bottom-0 end-0 p-1 bg-warning border border-white rounded-circle">
+                        <span class="visually-hidden">Online</span>
+                    </span>
+                </div>
+
+                <div>
+                    <h2 class="fw-bold mb-1">Halo, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h2>
+                    <p class="mb-0 text-white-50">Selamat datang di Panel Administrator CampusCycle.</p>
+                </div>
+            </div>
+
+            <div>
+                <a href="{{ route('admin.profile') }}" class="btn btn-light text-success fw-bold shadow-sm px-4 py-2">
+                    <i class="bi bi-person-gear me-2"></i> Edit Profil
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 

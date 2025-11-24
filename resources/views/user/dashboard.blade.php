@@ -3,18 +3,42 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="min-h-screen bg-green-50/60 py-10">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900" style="font-family: 'Poppins', sans-serif;">
-                Halo, {{ Auth::user()->name }}! 👋
-            </h1>
-            <p class="text-gray-500 mt-1 text-lg">
-                Selamat datang di CampusCycle.
-            </p>
+    <div class="flex flex-col md:flex-row items-center justify-between mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center w-full">
+
+                <div class="relative mr-5 shrink-0">
+                    @if(Auth::user()->profile_picture)
+                        <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}"
+                            alt="Profil"
+                            class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-[var(--primary)] p-0.5 shadow-md">
+                    @else
+                        <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-100 flex items-center justify-center text-2xl md:text-3xl font-bold text-[var(--primary)] border-2 border-green-200 shadow-md">
+                            {{ substr(Auth::user()->name, 0, 1) }}
+                        </div>
+                    @endif
+
+                    <span class="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
+                </div>
+
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900" style="font-family: 'Poppins', sans-serif;">
+                        Halo, {{ explode(' ', Auth::user()->name)[0] }}! 👋
+                    </h1>
+                    <p class="text-gray-500 mt-1 text-sm md:text-base">
+                        Selamat datang kembali di CampusCycle.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4 md:mt-0 w-full md:w-auto">
+                <a href="{{ route('user.profile') }}" class="flex items-center justify-center w-full md:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-all">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Profil
+                </a>
+            </div>
         </div>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

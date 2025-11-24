@@ -16,6 +16,13 @@ class UserMiddleware
             return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
+        if (Auth::user()->status == 'blocked') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/login')->with('error', 'Sesi berakhir. Akun Anda telah diblokir.');
+        }
+
         if (Auth::user()->role !== 'user') {
             return redirect('/admin/dashboard')->with('error', 'Akses ditolak. Hanya untuk mahasiswa.');
         }

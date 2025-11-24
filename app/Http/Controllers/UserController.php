@@ -7,6 +7,7 @@ use App\Models\Bicycle;
 use App\Models\Rental;
 use App\Models\Package;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -20,30 +21,20 @@ class UserController extends Controller
             ->count();
         $totalRentals = Rental::where('user_id', $user->id)->count();
 
-        // Ambil SEMUA rental untuk proses auto-check dan sync denda
-        $allRentals = Rental::where('user_id', $user->id)
-            ->with(['bicycle', 'package'])
-            ->get();
+        // PERBAIKAN: Sync denda keterlambatan untuk semua rental
+        $this->syncAllRentalDenda($user->id);
 
-        // Auto check untuk SEMUA overdue rentals & sync denda (TANPA ubah status)
-        foreach ($allRentals as $rental) {
-            $this->syncRentalStatusAndDenda($rental);
-        }
-
-        // Ambil 5 data terbaru untuk ditampilkan (setelah sync)
+        // Ambil 5 data terbaru untuk ditampilkan
         $rentals = Rental::where('user_id', $user->id)
             ->with(['bicycle', 'package'])
             ->latest()
             ->take(5)
-            ->get()
-            ->map(function ($rental) {
-                // Pastikan denda ter-update
-                $rental->syncDenda();
-                return $rental;
-            });
+            ->get();
 
-        // Hitung total denda yang sudah di-sync
-        $totalDenda = $rentals->sum('denda');
+        // PERBAIKAN: Hitung total denda menggunakan accessor dari Model Rental
+        $totalDenda = $rentals->sum(function($rental) {
+            return $rental->denda + $rental->denda_kerusakan;
+        });
 
         return view('user.dashboard', compact('user', 'rentals', 'activeRentals', 'totalRentals', 'totalDenda'));
     }
@@ -51,16 +42,16 @@ class UserController extends Controller
     public function bicycles()
     {
         $bicycles = Bicycle::select(
-                            'merk',
-                            'type',
-                            'description',
-                            'image',
-                            DB::raw('MIN(id) as id'),
-                            DB::raw('COUNT(id) as available_stock')
-                        )
-                        ->where('status', 'available')
-                        ->groupBy('merk', 'type', 'description', 'image')
-                        ->get();
+            'merk',
+            'type',
+            'description',
+            'image',
+            DB::raw('MIN(id) as id'),
+            DB::raw('COUNT(id) as available_stock')
+        )
+        ->where('status', 'available')
+        ->groupBy('merk', 'type', 'description', 'image')
+        ->get();
 
         return view('user.bicycles', compact('bicycles'));
     }
@@ -88,9 +79,9 @@ class UserController extends Controller
         $clickedBicycle = Bicycle::findOrFail($id);
 
         $bicycleToRent = Bicycle::where('merk', $clickedBicycle->merk)
-                                ->where('type', $clickedBicycle->type)
-                                ->where('status', 'available')
-                                ->first();
+            ->where('type', $clickedBicycle->type)
+            ->where('status', 'available')
+            ->first();
 
         if (!$bicycleToRent) {
             return back()->with('error', 'Maaf, stok sepeda jenis ini baru saja habis.');
@@ -118,94 +109,140 @@ class UserController extends Controller
 
     public function history()
     {
-        // Ambil SEMUA rental untuk proses auto-check dan sync denda
-        $allRentals = Rental::where('user_id', Auth::id())
-            ->with(['bicycle', 'package'])
-            ->get();
+        // PERBAIKAN: Sync denda keterlambatan sebelum menampilkan history
+        $this->syncAllRentalDenda(Auth::id());
 
-        // Auto check untuk SEMUA overdue rentals & sync denda
-        foreach ($allRentals as $rental) {
-            $this->syncRentalStatusAndDenda($rental);
-        }
-
-        // Ambil semua data untuk ditampilkan di history (setelah sync)
+        // Ambil semua data untuk ditampilkan di history
         $rentals = Rental::where('user_id', Auth::id())
             ->with(['bicycle', 'package'])
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($rental) {
-                // Pastikan denda ter-update
-                $rental->syncDenda();
-                return $rental;
-            });
+            ->get();
 
         return view('user.history', compact('rentals'));
     }
 
     public function returnBicycle($id)
-    {
-        $rental = Rental::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->with('bicycle')
-            ->firstOrFail();
+{
+    $rental = Rental::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->with(['bicycle', 'package'])
+        ->firstOrFail();
 
-        if ($rental->status !== 'berjalan') {
-            return back()->with('error', 'Sepeda ini tidak sedang disewa.');
-        }
-
-        $returnTime = Carbon::now();
-        $endTime = Carbon::parse($rental->end_time);
-        $isLate = $returnTime->gt($endTime);
-
-        // Hitung denda
-        $denda = 0;
-        if ($isLate) {
-            $minutesLate = $returnTime->diffInMinutes($endTime);
-            $blocksOfTenMinutes = ceil($minutesLate / 10);
-            $denda = $blocksOfTenMinutes * 5000;
-        }
-
-        // DEBUG: Log data sebelum update
-        \Log::info('Pengembalian Sepeda:', [
-            'rental_id' => $rental->id,
-            'user_id' => Auth::id(),
-            'end_time' => $rental->end_time,
-            'return_time' => $returnTime,
-            'is_late' => $isLate,
-            'minutes_late' => $isLate ? $minutesLate : 0,
-            'denda_calculated' => $denda,
-            'before_status' => $rental->status
-        ]);
-
-        // UPDATE langsung ke database (PASTI jalan)
-        $rental->update([
-            'return_time' => $returnTime,
-            'status' => 'selesai', // PASTIKAN status berubah
-            'denda' => $denda,
-        ]);
-
-        // Update status sepeda
-        $rental->bicycle->update(['status' => 'available']);
-
-        // DEBUG: Log setelah update
-        $updatedRental = Rental::find($rental->id);
-        \Log::info('Setelah Update:', [
-            'rental_id' => $updatedRental->id,
-            'after_status' => $updatedRental->status,
-            'after_return_time' => $updatedRental->return_time,
-            'after_denda' => $updatedRental->denda
-        ]);
-
-        return back()->with('success', 'Sepeda berhasil dikembalikan! ' .
-            ($denda > 0 ? "Denda: Rp " . number_format($denda, 0, ',', '.') : ''));
+    if ($rental->status !== 'berjalan') {
+        return back()->with('error', 'Sepeda ini tidak sedang disewa.');
     }
 
-    // METHOD BARU: Helper untuk sync status dan denda (TANPA ubah status)
-    private function syncRentalStatusAndDenda($rental)
+    $returnTime = Carbon::now('Asia/Jakarta');
+
+    // 1. HITUNG DENDA KETERLAMBATAN (sama seperti admin)
+    $isLate = $returnTime->gt($rental->end_time);
+    $dendaKeterlambatan = 0;
+
+    if ($isLate) {
+        $minutesLate = abs($returnTime->diffInMinutes($rental->end_time));
+        $intervals = ceil($minutesLate / 10);
+        $dendaKeterlambatan = $intervals * 5000;
+    }
+
+    // 2. TIDAK ADA DENDA KERUSAKAN (user tidak bisa kena denda kerusakan)
+    $dendaKerusakan = 0;
+
+    // 3. Hitung total biaya (sama seperti admin)
+    $biayaPaket = $rental->package->harga ?? 2500;
+    $totalBiaya = $biayaPaket + $dendaKeterlambatan + $dendaKerusakan;
+
+    // 4. Update database (sama seperti admin)
+    $rental->update([
+        'status' => 'selesai',
+        'return_time' => $returnTime,
+        'denda' => $dendaKeterlambatan,
+        'total_cost' => $totalBiaya,
+    ]);
+
+    $rental->bicycle->update(['status' => 'available']);
+
+    return back()->with('success', 'Sepeda dikembalikan! Total Bayar: Rp ' . number_format($totalBiaya, 0, ',', '.'));
+}
+
+    // PERBAIKAN: Method sync denda yang disederhanakan
+    private function syncAllRentalDenda($userId)
     {
-        // Hanya sync denda, TIDAK ubah status
-        // Untuk rental berjalan yang terlambat, biarkan status tetap 'berjalan'
-        // tapi hitung denda-nya
-        $rental->syncDenda();
+        $rentals = Rental::where('user_id', $userId)->get();
+
+        foreach ($rentals as $rental) {
+            $this->calculateAndUpdateDendaKeterlambatan($rental);
+        }
+    }
+
+    private function calculateAndUpdateDendaKeterlambatan($rental)
+    {
+        // Hanya untuk rental berjalan yang belum dikembalikan
+        if ($rental->status === 'berjalan' && !$rental->return_time) {
+            $endTime = Carbon::parse($rental->end_time);
+            $now = Carbon::now();
+
+            if ($now->gt($endTime)) {
+                $minutesLate = $now->diffInMinutes($endTime);
+                $blocksOfTenMinutes = ceil($minutesLate / 10);
+                $dendaKeterlambatan = $blocksOfTenMinutes * 5000;
+
+                // Update hanya denda keterlambatan
+                $rental->update(['denda' => $dendaKeterlambatan]);
+            }
+        }
+    }
+
+    // ==========================================
+    // FITUR TAMBAHAN: EDIT PROFIL & UPLOAD FOTO
+    // ==========================================
+
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('user.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'password' => 'nullable|min:6|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ], [
+            'name.required' => 'Nama wajib diisi.',
+            'email.unique' => 'Email ini sudah digunakan pengguna lain.',
+            'password.min' => 'Password baru minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+            'profile_picture.image' => 'File harus berupa gambar.',
+            'profile_picture.max' => 'Ukuran gambar maksimal 2MB.',
+        ]);
+
+        // 1. Update Data Dasar
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // 2. Logika Upload Foto Profil
+        if ($request->hasFile('profile_picture')) {
+            // Hapus foto lama jika ada
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            // Simpan foto baru
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $user->profile_picture = $path;
+        }
+
+        // 3. Update Password (Hanya jika diisi)
+        if ($request->filled('password')) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profil berhasil diperbarui!');
     }
 }

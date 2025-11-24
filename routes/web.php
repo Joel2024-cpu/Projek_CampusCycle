@@ -34,6 +34,8 @@ Route::prefix('user')->middleware(['auth'])->group(function () {
     Route::post('/bicycles/rent/{id}', [UserController::class, 'rentBicycle'])->name('user.rent');
     Route::get('/history', [UserController::class, 'history'])->name('user.history');
     Route::post('/return/{id}', [UserController::class, 'returnBicycle'])->name('user.return');
+    Route::get('/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
 });
 
 /*
@@ -57,8 +59,16 @@ Route::prefix('admin')->middleware(['auth', 'App\Http\Middleware\AdminMiddleware
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::post('/users/{id}/status', [AdminController::class, 'updateUserStatus'])->name('admin.users.updateStatus');
 
+    Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index'])->name('admin.packages');
+    Route::post('/packages/store', [App\Http\Controllers\PackageController::class, 'store'])->name('admin.packages.store');
+    Route::post('/packages/update/{id}', [App\Http\Controllers\PackageController::class, 'update'])->name('admin.packages.update');
+    Route::delete('/packages/{id}', [App\Http\Controllers\PackageController::class, 'destroy'])->name('admin.packages.destroy');
+
     // Rute Admin Lainnya
     Route::get('/payments', [AdminController::class, 'payments'])->name('admin.payments');
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('admin.transactions');
     Route::post('/transactions/{id}/status', [AdminController::class, 'updateTransactionStatus'])->name('admin.transactions.updateStatus');
+
+    Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
+    Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
 });

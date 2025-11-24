@@ -28,8 +28,8 @@ class Rental extends Model
         'return_time' => 'datetime',
     ];
 
-    // Tambahkan appends untuk akses mudah
-    protected $appends = ['formatted_denda', 'is_late', 'effective_status'];
+    // PERBAIKAN: Tambah appends untuk akses denda kerusakan & total biaya
+    protected $appends = ['formatted_denda', 'is_late', 'effective_status', 'denda_kerusakan', 'total_biaya'];
 
     public function user()
     {
@@ -59,9 +59,8 @@ class Rental extends Model
         return '-';
     }
 
-    // METHOD BARU: Hitung denda secara real-time (TANPA status terlambat)
-// KODE BARU: Mengatasi nilai negatif dan Timezone
-    public function calculateDenda()
+    // METHOD BARU: Hitung denda keterlambatan secara real-time
+    public function calculateDendaKeterlambatan()
     {
         // 1. Tentukan Waktu Pemeriksaan (Waktu Kembali JIKA sudah Selesai, atau Waktu Sekarang JIKA masih Berjalan)
         $waktuCek = $this->return_time ? $this->return_time->setTimezone('Asia/Jakarta') : Carbon::now('Asia/Jakarta');
@@ -73,19 +72,36 @@ class Rental extends Model
         }
 
         // 3. Hitung selisih menit keterlambatan
-        // PERBAIKAN KRITIS: Gunakan fungsi abs() untuk memastikan menit selalu positif (Tidak akan ada -170.000 lagi)
         $menitTerlambat = abs($waktuCek->diffInMinutes($batasWaktu));
 
         // 4. Hitung Denda
         $blokSepuluhMenit = ceil($menitTerlambat / 10);
         return $blokSepuluhMenit * 5000;
     }
+    public function calculateDenda()
+{
+    return $this->calculateDendaKeterlambatan();
+}
+
+    // ACCESSOR BARU: Denda kerusakan (default 0, diatur oleh admin)
+    public function getDendaKerusakanAttribute()
+    {
+        return 0; // Default 0, akan diatur manual oleh admin
+    }
+
+    // ACCESSOR BARU: Total biaya lengkap (paket + semua denda)
+    public function getTotalBiayaAttribute()
+    {
+        $biayaPaket = $this->package->harga ?? $this->total_cost;
+        $totalDenda = $this->denda + $this->denda_kerusakan;
+        return $biayaPaket + $totalDenda;
+    }
 
     // Accessor untuk status efektif (termasuk logic terlambat)
     public function getEffectiveStatusAttribute()
     {
         // Jika status selesai tapi ada denda, consider sebagai "selesai (terlambat)"
-        if ($this->status === 'selesai' && $this->calculateDenda() > 0) {
+        if ($this->status === 'selesai' && $this->calculateDendaKeterlambatan() > 0) {
             return 'selesai_terlambat';
         }
 
@@ -97,11 +113,11 @@ class Rental extends Model
         return $this->status;
     }
 
-    // Accessor untuk denda yang diformat
+    // Accessor untuk denda yang diformat - UPDATE
     public function getFormattedDendaAttribute()
     {
-        $denda = $this->denda > 0 ? $this->denda : $this->calculateDenda();
-        return $denda > 0 ? 'Rp ' . number_format($denda, 0, ',', '.') : '-';
+        $totalDenda = $this->denda + $this->denda_kerusakan;
+        return $totalDenda > 0 ? 'Rp ' . number_format($totalDenda, 0, ',', '.') : '-';
     }
 
     // Accessor untuk cek status terlambat
@@ -113,12 +129,14 @@ class Rental extends Model
         return now()->gt($this->end_time) && $this->status === 'berjalan';
     }
 
-    // Method untuk sync denda dengan calculation
+    // Method untuk sync denda dengan calculation - UPDATE
     public function syncDenda()
     {
-        $calculatedDenda = $this->calculateDenda();
+        $calculatedDenda = $this->calculateDendaKeterlambatan();
         if ($this->denda != $calculatedDenda) {
-            $this->update(['denda' => $calculatedDenda]);
+            if ($this->status !== 'selesai') {
+                $this->update(['denda' => $calculatedDenda]);
+            }
         }
         return $calculatedDenda;
     }
@@ -145,3 +163,4 @@ class Rental extends Model
         return $denda;
     }
 }
+

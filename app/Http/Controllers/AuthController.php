@@ -53,6 +53,13 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
+            if ($user->status == 'blocked') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return back()->with('error', 'Akun Anda telah DIBLOKIR oleh Admin. Silakan hubungi pihak kampus.');
+            }
+
             if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard')->with('success', 'Selamat datang Admin!');
             } else {
@@ -99,6 +106,12 @@ class AuthController extends Controller
 
             // Cek apakah user sudah ada
             $user = User::where('email', $googleUser->getEmail())->first();
+
+            // 🔥 LOGIKA BLOKIR (PENTING!) 🔥
+            // Jika user sudah ada DAN statusnya blocked, tolak login.
+            if ($user && $user->status == 'blocked') {
+                return redirect()->route('login')->with('error', 'Akun Google ini telah DIBLOKIR oleh Admin. Hubungi pihak kampus.');
+            }
 
             if (!$user) {
                 // 🔹 Tentukan role berdasarkan email

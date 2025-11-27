@@ -42,10 +42,12 @@
                                     data-harga="{{ $package->harga }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <form action="{{ route('admin.packages.destroy', $package->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus paket ini?')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger delete-package-btn"
+                                        data-id="{{ $package->id }}"
+                                        data-nama="{{ $package->nama_paket }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -106,21 +108,114 @@
     </div>
 </div>
 
+<!-- Modal Konfirmasi Hapus -->
+<div class="modal fade" id="deletePackageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content" style="border-radius: 14px; padding: 6px 4px 20px 4px;">
+            <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-1">
+                <h5 class="fw-bold m-0" style="font-size: 18px;">Konfirmasi Tindakan</h5>
+                <button class="btn btn-close m-0 p-0" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="text-center mt-2 mb-3">
+                <div style="
+                    width: 65px;
+                    height: 65px;
+                    border-radius: 50%;
+                    border: 3px solid #dc3545;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: auto;">
+                    <i class="bi bi-exclamation-lg" style="color: #dc3545; font-size: 40px;"></i>
+                </div>
+            </div>
+            <p class="text-center px-4" style="font-size: 15px; margin-bottom: 6px;">
+                Apakah Anda yakin ingin menghapus paket:
+                <br>
+                <span id="delete_package_name" class="fw-bold text-danger" style="font-size: 16px;"></span>?
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <button class="btn" data-bs-dismiss="modal"
+                        style="
+                        border: 1px solid #dcdcdc;
+                        background: white;
+                        color: #444;
+                        padding: 7px 18px;
+                        border-radius: 8px;
+                        font-size: 14px;">Batal
+                </button>
+                <button id="confirmDeletePackageBtn" class="btn"
+                        style="
+                        background: #dc3545;
+                        color: white;
+                        padding: 7px 18px;
+                        border-radius: 8px;
+                        font-size: 14px;">Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+    // edit
     const editButtons = document.querySelectorAll(".edit-btn");
-    const form = document.getElementById("editPackageForm");
-    const modal = new bootstrap.Modal(document.getElementById("editPackageModal"));
+    const editForm = document.getElementById("editPackageForm");
+    const editModal = new bootstrap.Modal(document.getElementById("editPackageModal"));
 
     editButtons.forEach(btn => {
         btn.addEventListener("click", function() {
-            form.action = `/admin/packages/update/${this.dataset.id}`;
+            editForm.action = `/admin/packages/update/${this.dataset.id}`;
             document.getElementById("edit_nama").value = this.dataset.nama;
             document.getElementById("edit_durasi").value = this.dataset.durasi;
             document.getElementById("edit_harga").value = this.dataset.harga;
-            modal.show();
+            editModal.show();
         });
     });
+
+    // konfirmasi hapus
+    let deleteUrl = "";
+    const deleteModal = new bootstrap.Modal(document.getElementById("deletePackageModal"));
+
+    document.querySelectorAll(".delete-package-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const id = this.dataset.id;
+            const nama = this.dataset.nama;
+
+            document.getElementById("delete_package_name").textContent = nama;
+
+            deleteUrl = `/admin/packages/${id}`;
+
+            deleteModal.show();
+        });
+    });
+
+    // Tombol konfirmasi hapus
+    document.getElementById("confirmDeletePackageBtn").addEventListener("click", function () {
+
+        const form = document.createElement("form");
+        form.action = deleteUrl;
+        form.method = "POST";
+
+        const csrf = document.createElement("input");
+        csrf.type = "hidden";
+        csrf.name = "_token";
+        csrf.value = "{{ csrf_token() }}";
+
+        const method = document.createElement("input");
+        method.type = "hidden";
+        method.name = "_method";
+        method.value = "DELETE";
+
+        form.appendChild(csrf);
+        form.appendChild(method);
+        document.body.appendChild(form);
+
+        form.submit();
+    });
+
 });
 </script>
+
 @endsection

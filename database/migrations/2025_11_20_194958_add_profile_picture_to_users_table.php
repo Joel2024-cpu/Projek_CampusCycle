@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Menambahkan kolom profile_picture setelah email
             $table->string('profile_picture')->nullable()->after('status');
         });
     }

@@ -149,8 +149,6 @@
                 </div>
                 <nav aria-label="Page navigation">
                     <ul class="pagination pagination-sm mb-0">
-
-                        {{-- Previous Page Link --}}
                         @if ($users->onFirstPage())
                             <li class="page-item disabled">
                                 <span class="page-link"><i class="bi bi-chevron-left"></i></span>
@@ -163,14 +161,12 @@
                             </li>
                         @endif
 
-                        {{-- Pagination Elements --}}
                         @foreach ($users->getUrlRange(1, $users->lastPage()) as $page => $url)
                             @if ($page == $users->currentPage())
                                 <li class="page-item active">
                                     <span class="page-link">{{ $page }}</span>
                                 </li>
                             @else
-                                {{-- Logika Singkat Halaman --}}
                                 @if($page == 1 || $page == $users->lastPage() || ($page >= $users->currentPage() - 1 && $page <= $users->currentPage() + 1))
                                     <li class="page-item">
                                         <a class="page-link" href="{{ $url }}">{{ $page }}</a>
@@ -181,7 +177,6 @@
                             @endif
                         @endforeach
 
-                        {{-- Next Page Link --}}
                         @if ($users->hasMorePages())
                             <li class="page-item">
                                 <a class="page-link" href="{{ $users->nextPageUrl() }}" aria-label="Next">
@@ -228,27 +223,22 @@
         const confirmActionModal = document.getElementById('confirmActionModal');
         let formToSubmitId = null;
 
-        // Listener saat modal akan ditampilkan
         confirmActionModal.addEventListener('show.bs.modal', function (event) {
-            // Tombol yang memicu modal
+
             const button = event.relatedTarget;
 
-            // Ambil data dari atribut data-* di tombol
             const message = button.dataset.message;
-            formToSubmitId = button.dataset.formId; // Simpan ID form yang akan di-submit
+            formToSubmitId = button.dataset.formId; 
 
-            // Masukkan pesan konfirmasi ke dalam modal (Support HTML Tag <strong>)
             const modalBody = confirmActionModal.querySelector('.modal-body #modal-message-content');
             modalBody.innerHTML = message;
         });
 
-        // Listener untuk tombol "Ya, Lakukan" di dalam modal
         const confirmButton = document.getElementById('confirm-action-button');
         confirmButton.addEventListener('click', function() {
             if (formToSubmitId) {
                 const form = document.getElementById(formToSubmitId);
                 if (form) {
-                    // Kirim form yang benar
                     form.submit();
                 }
             }
@@ -257,11 +247,10 @@
 </script>
 
 <style>
-/* STYLE PAGINATION HIJAU KONSISTEN */
 .pagination-sm .page-link {
     padding: 0.3rem 0.6rem;
     font-size: 0.875rem;
-    color: #198754; /* Hijau */
+    color: #198754; 
     background-color: #fff;
     border: 1px solid #dee2e6;
     border-radius: 6px;

@@ -108,7 +108,7 @@
     </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus -->
+
 <div class="modal fade" id="deletePackageModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
         <div class="modal-content" style="border-radius: 14px; padding: 6px 4px 20px 4px;">
@@ -159,7 +159,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // edit
+
     const editButtons = document.querySelectorAll(".edit-btn");
     const editForm = document.getElementById("editPackageForm");
     const editModal = new bootstrap.Modal(document.getElementById("editPackageModal"));
@@ -174,7 +174,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // konfirmasi hapus
     let deleteUrl = "";
     const deleteModal = new bootstrap.Modal(document.getElementById("deletePackageModal"));
 
@@ -191,7 +190,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Tombol konfirmasi hapus
     document.getElementById("confirmDeletePackageBtn").addEventListener("click", function () {
 
         const form = document.createElement("form");

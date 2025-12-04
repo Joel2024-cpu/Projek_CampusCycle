@@ -20,14 +20,13 @@
         * { font-family: 'Poppins', sans-serif; }
         body { background-color: var(--light-bg); color: var(--text-dark); }
 
-        /* --- CSS SIDEBAR BARU (Premium Look) --- */
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, var(--primary) 0%, #004d26 100%);
             padding-top: 1.5rem;
             box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
             display: flex;
-            flex-direction: column; /* Kunci agar logout bisa di bawah */
+            flex-direction: column;
             position: sticky;
             top: 0;
             height: 100vh;
@@ -57,7 +56,7 @@
 
         .sidebar-nav {
             padding: 0 15px;
-            flex-grow: 1; /* Mengisi ruang agar logout terdorong */
+            flex-grow: 1; 
         }
 
         .nav-link {
@@ -97,9 +96,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: auto;
         }
-        /* --- END SIDEBAR CSS --- */
 
-        /* Main Content (TETAP SAMA) */
         .main-content {
             padding: 2rem;
             background: var(--light-bg);
@@ -107,7 +104,6 @@
             flex: 1;
         }
 
-        /* Helper Classes dari kode lama Anda (Card, Table, dll) */
         .card-custom {
             background: var(--card-bg); border: none; border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease;

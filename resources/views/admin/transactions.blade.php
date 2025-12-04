@@ -58,53 +58,60 @@
                     <th class="text-end">Aksi</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($transactions as $transaction)
                 <tr>
                     <td class="fw-bold text-success">#T{{ $transaction->id }}</td>
+                    
                     <td>
                         <div class="fw-bold">{{ $transaction->user->name }}</div>
                         <small class="text-muted">{{ $transaction->user->email }}</small>
                     </td>
+
                     <td>
                         {{ $transaction->bicycle->merk ?? '-' }}
                         <span class="badge bg-light text-dark border ms-1">{{ $transaction->bicycle->kode_sepeda ?? '' }}</span>
                     </td>
+
                     <td>
                         <div class="small">Mulai: {{ $transaction->start_time?->format('d M H:i') ?? '-' }}</div>
                         <div class="small {{ $transaction->is_late && $transaction->status != 'selesai' ? 'text-danger fw-bold' : 'text-success' }}">
                             Batas: {{ $transaction->end_time?->format('d M H:i') ?? '-' }}
                         </div>
                     </td>
+
                     <td>
-    @php
-        // HITUNG BREAKDOWN DENDA UNTUK ADMIN
-        $biayaPaket = $transaction->package->harga ?? $transaction->total_cost;
-        $dendaKeterlambatan = $transaction->denda ?? 0;
-        $dendaKerusakan = $transaction->total_cost - ($biayaPaket + $dendaKeterlambatan);
-        if ($dendaKerusakan < 0) {
-            $dendaKerusakan = 0;
-        }
-        $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
-    @endphp
+                        @php
+                            $biayaPaket = $transaction->package->harga ?? $transaction->total_cost;
+                            $dendaKeterlambatan = $transaction->denda ?? 0;
 
-    <div class="fw-bold">Rp {{ number_format($transaction->total_cost, 0, ',', '.') }}</div>
+                            $dendaKerusakan = $transaction->total_cost - ($biayaPaket + $dendaKeterlambatan);
+                            if ($dendaKerusakan < 0) {
+                                $dendaKerusakan = 0;
+                            }
+                            $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
+                        @endphp
 
-    @if($totalDenda > 0)
-        <div class="mt-1">
-            @if($dendaKeterlambatan > 0)
-                <small class="text-danger d-block">
-                    <i class="bi bi-clock-fill me-1"></i>Telat: +{{ number_format($dendaKeterlambatan, 0, ',', '.') }}
-                </small>
-            @endif
-            @if($dendaKerusakan > 0)
-                <small class="text-warning d-block">
-                    <i class="bi bi-tools me-1"></i>Rusak: +{{ number_format($dendaKerusakan, 0, ',', '.') }}
-                </small>
-            @endif
-        </div>
-    @endif
-</td>
+                        <div class="fw-bold">Rp {{ number_format($transaction->total_cost, 0, ',', '.') }}</div>
+
+                        @if($totalDenda > 0)
+                            <div class="mt-1">
+                                @if($dendaKeterlambatan > 0)
+                                    <small class="text-danger d-block">
+                                        <i class="bi bi-clock-fill me-1"></i>Telat: +{{ number_format($dendaKeterlambatan, 0, ',', '.') }}
+                                    </small>
+                                @endif
+
+                                @if($dendaKerusakan > 0)
+                                    <small class="text-warning d-block">
+                                        <i class="bi bi-tools me-1"></i>Rusak: +{{ number_format($dendaKerusakan, 0, ',', '.') }}
+                                    </small>
+                                @endif
+                            </div>
+                        @endif
+                    </td>
+
                     <td>
                         @if($transaction->status == 'pending')
                             <span class="badge bg-warning text-dark">Menunggu</span>
@@ -116,6 +123,7 @@
                             <span class="badge bg-secondary">Batal</span>
                         @endif
                     </td>
+
                     <td class="text-end">
                         @if($transaction->status == 'pending')
                             <button class="btn btn-sm btn-primary btn-start"
@@ -150,6 +158,7 @@
                         @endif
                     </td>
                 </tr>
+
                 @empty
                 <tr>
                     <td colspan="7" class="text-center text-muted py-5">
@@ -168,9 +177,10 @@
             <div class="text-muted small">
                 Menampilkan {{ $transactions->firstItem() ?? 0 }} - {{ $transactions->lastItem() ?? 0 }} dari {{ $transactions->total() }} data
             </div>
+
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
-                    {{-- Previous Page Link --}}
+
                     @if ($transactions->onFirstPage())
                         <li class="page-item disabled">
                             <span class="page-link"><i class="bi bi-chevron-left"></i></span>
@@ -183,14 +193,12 @@
                         </li>
                     @endif
 
-                    {{-- Pagination Elements --}}
                     @foreach ($transactions->getUrlRange(1, $transactions->lastPage()) as $page => $url)
                         @if ($page == $transactions->currentPage())
                             <li class="page-item active">
                                 <span class="page-link">{{ $page }}</span>
                             </li>
                         @else
-                            {{-- Logika Penyingkatan Halaman --}}
                             @if($page == 1 || $page == $transactions->lastPage() || ($page >= $transactions->currentPage() - 1 && $page <= $transactions->currentPage() + 1))
                                 <li class="page-item">
                                     <a class="page-link" href="{{ $url }}">{{ $page }}</a>
@@ -201,7 +209,6 @@
                         @endif
                     @endforeach
 
-                    {{-- Next Page Link --}}
                     @if ($transactions->hasMorePages())
                         <li class="page-item">
                             <a class="page-link" href="{{ $transactions->nextPageUrl() }}" aria-label="Next">
@@ -229,6 +236,7 @@
                 <h5 class="modal-title"><i class="bi bi-play-circle me-2"></i>Mulai Sewa</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body text-center py-4">
                 <div class="mb-3">
                     <i class="bi bi-bicycle text-primary display-4"></i>
@@ -237,6 +245,7 @@
                 <h5 class="fw-bold text-dark" id="startUser">Nama User</h5>
                 <p class="text-muted small mt-3">Status akan berubah menjadi <strong>Sedang Jalan</strong> dan waktu sewa dimulai sekarang.</p>
             </div>
+
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Batal</button>
                 <button type="submit" class="btn btn-primary px-4">Ya, Mulai Sewa</button>
@@ -254,11 +263,13 @@
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Batalkan Pesanan</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body text-center py-4">
                 <p class="mb-1">Anda akan membatalkan pesanan milik:</p>
                 <h5 class="fw-bold text-dark" id="cancelUser">Nama User</h5>
                 <p class="text-danger small mt-3 fw-bold">Tindakan ini tidak dapat dibatalkan!</p>
             </div>
+            
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Kembali</button>
                 <button type="submit" class="btn btn-danger px-4">Ya, Batalkan</button>
@@ -308,7 +319,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // SOLUSI SIMPLE - Pasti work
     const startButtons = document.querySelectorAll(".btn-start");
     const cancelButtons = document.querySelectorAll(".btn-cancel");
     const returnButtons = document.querySelectorAll(".btn-return");
@@ -340,11 +350,10 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 <style>
-/* CSS KHUSUS PAGINATION */
 .pagination-sm .page-link {
     padding: 0.3rem 0.6rem;
     font-size: 0.875rem;
-    color: #198754; /* Hijau */
+    color: #198754; 
     background-color: #fff;
     border: 1px solid #dee2e6;
     border-radius: 6px;

@@ -71,7 +71,6 @@
                                     $lateDisplay = $lateHours > 0 ? $lateHours . 'j ' . $lateMinutesRemainder . 'm' : $lateMinutes . ' menit';
                                 }
 
-                                // PERBAIKAN: Ambil data denda dari database (sesuai dengan admin)
                                 $dendaKeterlambatan = $rental->denda;
                                 $biayaPaket = $rental->package->harga ?? $rental->total_cost;
                                 $dendaKerusakan = $rental->total_cost - ($biayaPaket + $dendaKeterlambatan);
@@ -80,12 +79,10 @@
                                 }
                                 $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
 
-                                // PERBAIKAN: Total biaya yang benar - sama dengan admin
                                 $totalBiaya = $rental->total_cost;
                             @endphp
 
                             <tr class="hover:bg-gray-50/80 backdrop-blur-sm transition-colors group">
-
                                 <td class="px-6 py-4 border-r border-gray-200">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-xl bg-gray-100/80 backdrop-blur-sm flex items-center justify-center text-gray-400 shrink-0 border border-gray-200/60">
@@ -183,6 +180,7 @@
                                                         Telat: +{{ number_format($dendaKeterlambatan, 0, ',', '.') }}
                                                     </span>
                                                 @endif
+
                                                 @if($dendaKerusakan > 0)
                                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-600 border border-orange-200">
                                                         Rusak: +{{ number_format($dendaKerusakan, 0, ',', '.') }}
@@ -192,7 +190,6 @@
                                         @endif
                                     @endif
                                 </td>
-
                             </tr>
                             @endforeach
                         </tbody>

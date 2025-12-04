@@ -11,10 +11,8 @@ class BicycleSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now();
-        $bicycles = []; // Array kosong untuk menampung 30 sepeda
+        $bicycles = []; 
 
-        // 1. Definisikan 3 MEREK utama
-        // (Deskripsi dan Tipe diambil dari file Anda, tapi link gambar diperbaiki)
         $brands = [
             [
                 'kode_prefix' => 'PLY',
@@ -39,26 +37,21 @@ class BicycleSeeder extends Seeder
             ],
         ];
 
-        // 2. Looping: 10x untuk setiap merek (Membuat 30 stok)
         foreach ($brands as $brand) {
             for ($i = 1; $i <= 10; $i++) {
-
-                // Tambahkan data sepeda ke array
                 $bicycles[] = [
-                    // Membuat kode unik: PLY-01, PLY-02, ... UNT-01, UNT-02, ...
                     'kode_sepeda' => $brand['kode_prefix'] . '-' . str_pad($i, 2, '0', STR_PAD_LEFT),
                     'merk' => $brand['merk'],
                     'type' => $brand['type'],
                     'description' => $brand['description'],
                     'image' => $brand['image'],
-                    'status' => 'available', // Semua langsung tersedia
+                    'status' => 'available', 
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
             }
         }
 
-        // 3. Masukkan 30 data sepeda sekaligus ke database
         Bicycle::insert($bicycles);
     }
 }

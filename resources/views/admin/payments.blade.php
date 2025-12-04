@@ -293,7 +293,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. Script Modal Detail
+
         const detailModal = document.getElementById('detailModal');
         detailModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
@@ -314,7 +314,6 @@
             statusBadge.className = isLunas ? 'badge bg-success' : 'badge bg-warning text-dark';
         });
 
-        // 2. Script Pie Chart
         const ctx = document.getElementById('revenueDistributionChart');
         if (ctx) {
             @if(isset($revenueDistribution) && $revenueDistribution->count() > 0)
@@ -343,7 +342,6 @@
 </script>
 
 <style>
-/* STYLE PAGINATION HIJAU KONSISTEN */
 .pagination-sm .page-link {
     padding: 0.3rem 0.6rem;
     font-size: 0.875rem;

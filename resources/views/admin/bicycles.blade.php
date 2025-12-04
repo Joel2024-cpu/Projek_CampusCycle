@@ -282,7 +282,7 @@
     </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus Sepeda -->
+
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
         <div class="modal-content" style="border-radius: 14px; padding: 6px 4px 20px 4px;">
@@ -338,22 +338,18 @@ document.addEventListener("DOMContentLoaded", function() {
     const editButtons = document.querySelectorAll(".edit-btn");
     const form = document.getElementById("editBicycleForm");
 
-    // FIX KRITIS: Re-open modal JIKA terjadi error saat Tambah Sepeda (Mengatasi ParseError)
     @if ($errors->any())
         var addModal = new bootstrap.Modal(document.getElementById('addBicycleModal'));
         addModal.show();
     @endif
 
-    // Logic untuk Modal Edit
     editButtons.forEach(btn => {
         btn.addEventListener("click", function() {
             const id = this.dataset.id;
 
-            // Mengarahkan Action Edit sesuai rute POST update Anda
             form.action = `/admin/bicycles/update/${id}`;
-            form.method = 'POST'; // Pastikan form method adalah POST
+            form.method = 'POST'; 
 
-            // Mengisi data ke form
             document.getElementById("edit_kode").value = this.dataset.kode;
             document.getElementById("edit_merk").value = this.dataset.merk;
             document.getElementById("edit_type").value = this.dataset.type;
@@ -377,21 +373,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const id = this.dataset.id;
             const name = this.dataset.name;
 
-            // Isi nama sepeda dalam modal
             document.getElementById("delete_bike_name").textContent = name;
 
-            // Set URL delete
             deleteUrl = `/admin/bicycles/${id}`;
 
-            // Tampilkan modal
             deleteModal.show();
         });
     });
 
-    // Tombol "Ya, Hapus"
+
     document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
 
-        // Buat form delete
         const form = document.createElement("form");
         form.action = deleteUrl;
         form.method = "POST";

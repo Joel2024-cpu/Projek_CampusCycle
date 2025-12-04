@@ -1,9 +1,6 @@
 <footer class="bg-[var(--primary)] text-white mt-20">
     <div class="max-w-7xl mx-auto px-6 py-16">
-        <!-- Main Footer Content -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-
-            <!-- Brand Column -->
             <div class="md:col-span-2">
                 <div class="flex items-center mb-4">
                     <img src="https://i.pinimg.com/originals/43/25/cf/4325cffcaafcb5832272cc10372708e3.png"
@@ -33,7 +30,6 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
             <div>
                 <h4 class="text-lg font-semibold mb-6 text-white">Tautan Cepat</h4>
                 <ul class="space-y-3">
@@ -58,7 +54,6 @@
                 </ul>
             </div>
 
-            <!-- Contact Info -->
             <div>
                 <h4 class="text-lg font-semibold mb-6 text-white">Kontak Kami</h4>
                 <div class="space-y-4">
@@ -87,7 +82,6 @@
             </div>
         </div>
 
-        <!-- Bottom Bar -->
         <div class="border-t border-white/20 pt-8">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="text-center md:text-left mb-4 md:mb-0">

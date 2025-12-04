@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BicycleController; // Tetap diperlukan untuk store/update/destroy
+use App\Http\Controllers\BicycleController; 
 
 Route::get('/', function () {
     return view('home');
@@ -17,16 +17,10 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-
-// Login dengan Google
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
-/*
-|--------------------------------------------------------------------------
-| Rute User (Mahasiswa)
-|--------------------------------------------------------------------------
-*/
+
 Route::prefix('user')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
     Route::get('/bicycles', [UserController::class, 'bicycles'])->name('user.bicycles');
@@ -38,37 +32,21 @@ Route::prefix('user')->middleware(['auth'])->group(function () {
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Rute Admin (Blok ini yang direvisi)
-|--------------------------------------------------------------------------
-*/
 Route::prefix('admin')->middleware(['auth', 'App\Http\Middleware\AdminMiddleware'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-
-    // Rute Sepeda (Semua diarahkan ke BicycleController untuk konsistensi)
-    // PERBAIKAN: Mengubah AdminController::bicycles ke BicycleController::index
     Route::get('/bicycles', [BicycleController::class, 'index'])->name('admin.bicycles');
-
-    // Rute berikut sudah benar:
     Route::post('/bicycles/store', [BicycleController::class, 'store'])->name('admin.bicycles.store');
     Route::post('/bicycles/update/{id}', [BicycleController::class, 'update'])->name('admin.bicycles.update');
     Route::delete('/bicycles/{id}', [BicycleController::class, 'destroy'])->name('admin.bicycles.destroy');
-
-    // Rute Pengguna
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::post('/users/{id}/status', [AdminController::class, 'updateUserStatus'])->name('admin.users.updateStatus');
-
     Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index'])->name('admin.packages');
     Route::post('/packages/store', [App\Http\Controllers\PackageController::class, 'store'])->name('admin.packages.store');
     Route::post('/packages/update/{id}', [App\Http\Controllers\PackageController::class, 'update'])->name('admin.packages.update');
     Route::delete('/packages/{id}', [App\Http\Controllers\PackageController::class, 'destroy'])->name('admin.packages.destroy');
-
-    // Rute Admin Lainnya
     Route::get('/payments', [AdminController::class, 'payments'])->name('admin.payments');
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('admin.transactions');
     Route::post('/transactions/{id}/status', [AdminController::class, 'updateTransactionStatus'])->name('admin.transactions.updateStatus');
-
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
 });

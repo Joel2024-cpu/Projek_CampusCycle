@@ -9,10 +9,9 @@ class PackageController extends Controller
 {
     public function index()
     {
-        $packages = Package::withCount('rentals')->get(); // Menghitung berapa kali paket dipakai
+        $packages = Package::withCount('rentals')->get(); 
         return view('admin.packages', compact('packages'));
     }
-
     public function store(Request $request)
     {
         $request->validate([
@@ -24,7 +23,6 @@ class PackageController extends Controller
         Package::create($request->all());
         return redirect()->route('admin.packages')->with('success', 'Paket berhasil ditambahkan!');
     }
-
     public function update(Request $request, $id)
     {
         $package = Package::findOrFail($id);
@@ -38,12 +36,9 @@ class PackageController extends Controller
         $package->update($request->all());
         return redirect()->route('admin.packages')->with('success', 'Paket berhasil diperbarui!');
     }
-
     public function destroy($id)
     {
         $package = Package::findOrFail($id);
-
-        // Cek jika paket sedang dipakai di transaksi aktif
         if ($package->rentals()->where('status', 'berjalan')->exists()) {
             return back()->with('error', 'Paket sedang digunakan dalam transaksi aktif, tidak bisa dihapus.');
         }

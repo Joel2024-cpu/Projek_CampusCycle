@@ -11,7 +11,6 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // ✅ FIX: Check if user is authenticated AND is admin
         if (!Auth::check()) {
             return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
         }

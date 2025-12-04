@@ -45,29 +45,24 @@
         <div class="lg:col-span-2 space-y-8">
 
             @php
-                // Ambil 1 data sewa yang sedang 'berjalan'
                 $currentRental = $rentals->where('status', 'berjalan')->first();
             @endphp
 
             @if($currentRental)
                 @php
-                    // Logika untuk Progress Bar Waktu
                     $startTime = \Carbon\Carbon::parse($currentRental->start_time);
                     $endTime = \Carbon\Carbon::parse($currentRental->end_time);
                     $now = now();
 
-                    // Hitung waktu tersisa untuk initial load
                     if ($now->lt($endTime)) {
                         $totalDuration = $endTime->diffInSeconds($startTime);
                         $elapsedDuration = $now->diffInSeconds($startTime);
                         $timePercentage = min(100, max(0, ($elapsedDuration / $totalDuration) * 100));
 
-                        // Hitung sisa waktu dalam jam dan menit
                         $remainingTime = $now->diff($endTime);
                         $remainingHours = $remainingTime->h;
                         $remainingMinutes = $remainingTime->i;
                     } else {
-                        // Jika waktu sudah habis
                         $timePercentage = 100;
                         $remainingHours = 0;
                         $remainingMinutes = 0;
@@ -176,21 +171,17 @@
                             const elapsed = now - startTime;
                             const remaining = endTime - now;
 
-                            // Update progress bar
                             if (totalDuration > 0) {
                                 const progressPercentage = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
                                 progressElement.style.width = progressPercentage + '%';
                             }
 
-                            // Update countdown timer
                             if (remaining > 0) {
                                 const hours = Math.floor(remaining / (1000 * 60 * 60));
                                 const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
                                 const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
 
                                 countdownElement.textContent = hours + ' jam ' + minutes + ' menit ' + seconds + ' detik';
-
-                                // Update setiap detik
                                 setTimeout(updateCountdown, 1000);
                             } else {
                                 countdownElement.textContent = 'Waktu habis';
@@ -199,7 +190,6 @@
                             }
                         }
 
-                        // Mulai countdown
                         updateCountdown();
                     });
                 </script>
@@ -360,36 +350,39 @@
             </div>
         </div>
 
-    </div> </div> <div id="contact-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-    <div class="relative p-4 w-full max-w-md max-h-full">
-        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                    Pusat Bantuan Admin
-                </h3>
-                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="contact-modal">
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
-                    <span class="sr-only">Tutup</span>
-                </button>
-            </div>
-            <div class="p-4 md:p-5 space-y-4">
-                <p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
-                    Jika Anda mengalami kendala teknis atau masalah pada sepeda, silakan hubungi admin pada jam operasional.
-                </p>
-                <ul class="space-y-3">
-                    <li class="flex items-center text-sm">
-                        <i class="fa-brands fa-whatsapp text-gray-400 w-6 text-lg"></i>
-                        <span class="ml-3 text-gray-700 font-medium dark:text-gray-300">0812-3456-7890 (WA Admin)</span>
-                    </li>
-                    <li class="flex items-center text-sm">
-                        <i class="fa-regular fa-clock text-gray-400 w-6 text-lg"></i>
-                        <span class="ml-3 text-gray-700 font-medium dark:text-gray-300">Senin - Jumat (08.00 - 16.00)</span>
-                    </li>
-                </ul>
+    <div id="contact-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
+        justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        Pusat Bantuan Admin
+                    </h3>
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex 
+                    justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="contact-modal">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+                        <span class="sr-only">Tutup</span>
+                    </button>
+                </div>
+                <div class="p-4 md:p-5 space-y-4">
+                    <p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                        Jika Anda mengalami kendala teknis atau masalah pada sepeda, silakan hubungi admin pada jam operasional.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center text-sm">
+                            <i class="fa-brands fa-whatsapp text-gray-400 w-6 text-lg"></i>
+                            <span class="ml-3 text-gray-700 font-medium dark:text-gray-300">0812-3456-7890 (WA Admin)</span>
+                        </li>
+                        <li class="flex items-center text-sm">
+                            <i class="fa-regular fa-clock text-gray-400 w-6 text-lg"></i>
+                            <span class="ml-3 text-gray-700 font-medium dark:text-gray-300">Senin - Jumat (08.00 - 16.00)</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <form id="returnFormFlowbite" action="{{ route('user.return', $currentRental->id ?? 0) }}" method="POST" class="hidden">
     @csrf
@@ -417,6 +410,4 @@
         </div>
     </div>
 </div>
-
-
 @endsection

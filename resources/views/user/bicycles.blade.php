@@ -86,8 +86,6 @@
 
                         <div class="mt-auto pt-6 border-t border-dashed border-gray-200 flex items-center justify-between">
 
-
-
                             @if($bicycle->available_stock > 0)
                                 <a href="{{ route('user.rent.form', $bicycle->id) }}"
                                    class="relative overflow-hidden inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-900 text-white shadow-lg group-hover:bg-[var(--primary)] group-hover:w-32 transition-all duration-500 ease-out">

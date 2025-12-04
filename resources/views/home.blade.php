@@ -5,7 +5,8 @@
 @section('content')
 
 <section class="relative flex items-center min-h-screen"
-    style="background: linear-gradient(rgba(0, 104, 55, 0.9), rgba(0, 0, 0, 0.7)), url('https://maukuliah.ap-south-1.linodeobjects.com/gallery/001025/Gedung%205%20UNEJ-thumbnail.jpg') center/cover no-repeat;">
+    style="background: linear-gradient(rgba(0, 104, 55, 0.9), rgba(0, 0, 0, 0.7)), 
+    url('https://maukuliah.ap-south-1.linodeobjects.com/gallery/001025/Gedung%205%20UNEJ-thumbnail.jpg') center/cover no-repeat;">
     <div class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 items-center gap-12">
         <div>
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -56,7 +57,7 @@
         <p class="text-gray-600 text-lg mb-12">Kami menyediakan solusi lengkap untuk kebutuhan transportasi ramah lingkungan di kampus UNEJ</p>
 
         <div class="grid md:grid-cols-3 gap-8">
-            <!-- Feature 1 -->
+
             <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:-translate-y-2 transition">
                 <div class="w-20 h-20 mx-auto bg-[rgba(0,104,55,0.1)] rounded-full flex items-center justify-center mb-6 hover:scale-110 transition">
                     <i class="fas fa-bicycle text-4xl text-[var(--primary)]"></i>
@@ -66,7 +67,6 @@
                 <span class="inline-block bg-[var(--primary)] text-white px-4 py-1 rounded-full text-sm">Real-time Tracking</span>
             </div>
 
-            <!-- Feature 2 -->
             <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:-translate-y-2 transition">
                 <div class="w-20 h-20 mx-auto bg-[rgba(0,104,55,0.1)] rounded-full flex items-center justify-center mb-6 hover:scale-110 transition">
                     <i class="fas fa-money-bill-wave text-4xl text-[var(--primary)]"></i>
@@ -76,7 +76,6 @@
                 <span class="inline-block bg-[var(--primary)] text-white px-4 py-1 rounded-full text-sm">Verifikasi Instan</span>
             </div>
 
-            <!-- Feature 3 -->
             <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:-translate-y-2 transition">
                 <div class="w-20 h-20 mx-auto bg-[rgba(0,104,55,0.1)] rounded-full flex items-center justify-center mb-6 hover:scale-110 transition">
                     <i class="fas fa-calculator text-4xl text-[var(--primary)]"></i>
@@ -89,7 +88,6 @@
     </div>
 </section>
 
-<!-- About Section -->
 <section id="tentang" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 items-center gap-12">
         <div class="relative">
@@ -129,7 +127,6 @@
     </div>
 </section>
 
-<!-- CTA Section -->
 <section class="py-20 bg-[var(--primary)] text-white text-center">
     <div class="max-w-3xl mx-auto px-6">
         <h2 class="text-3xl md:text-4xl font-bold mb-4">Siap Bergabung dengan CampusCycle?</h2>

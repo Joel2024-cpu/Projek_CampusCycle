@@ -77,48 +77,39 @@
 </div>
 
 <script>
-    // Membungkus listener di DOMContentLoaded agar aman
     document.addEventListener("DOMContentLoaded", function() {
 
         const startTimeInput = document.getElementById('start_time');
         const packageSelect = document.getElementById('package_id');
 
-        // Fungsi ini akan dipanggil oleh KEDUA input
         function updateRentalDetails() {
             const startInput = startTimeInput.value;
             const selected = packageSelect.options[packageSelect.selectedIndex];
 
-            // Cek jika data-hours ada, jika tidak, set durasi ke 0
             const durasi = selected.dataset.hours ? parseFloat(selected.dataset.hours) : 0;
-            // Cek jika data-price ada, jika tidak, set harga ke 0
             const harga = selected.dataset.price ? parseInt(selected.dataset.price) : 0;
 
-            // 1. Update Waktu Selesai (HANYA jika waktu mulai DAN durasi sudah diisi)
             if (startInput && durasi > 0) {
                 const start = new Date(startInput);
                 const end = new Date(start.getTime() + durasi * 60 * 60 * 1000);
 
-                // Format 'id-ID' (Indonesia) agar mudah dibaca
                 document.getElementById('end_time').value = end.toLocaleString('id-ID', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 }) + ' WIB';
             } else {
-                document.getElementById('end_time').value = ''; // Kosongkan jika belum lengkap
+                document.getElementById('end_time').value = ''; 
             }
 
-            // 2. Update Total Biaya
             if (harga > 0) {
                 document.getElementById('total_cost').value = 'Rp ' + harga.toLocaleString('id-ID');
             } else {
-                document.getElementById('total_cost').value = ''; // Kosongkan jika belum pilih paket
+                document.getElementById('total_cost').value = ''; 
             }
         }
 
-        // Pasang listener di KEDUA input
         startTimeInput.addEventListener('change', updateRentalDetails);
         packageSelect.addEventListener('change', updateRentalDetails);
-
-        // (Opsional) Panggil fungsi saat halaman dimuat, untuk mengisi data 'old()'
+        
         updateRentalDetails();
     });
 </script>
